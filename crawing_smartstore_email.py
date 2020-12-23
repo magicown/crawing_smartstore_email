@@ -84,8 +84,8 @@ for i in list_div :
     list_d = i.select('.basicList_title__3P9Q7')
     for j in list_d :
         list_e.append(j.get_text())
-        list_url.append(j.select('a'))
-
+        urls = re.findAll('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', j)
+        list_url.append(urls)
 
 print(list_url)
 
