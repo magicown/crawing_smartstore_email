@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def chrome_option():
     options = webdriver.ChromeOptions()
-    # options.add_argument('headless')
+    options.add_argument('headless')
     options.add_argument('window-size=1920x1080')
     options.add_argument("disable-gpu")
     options.add_argument("lang=ko_KR") # 한국어!
@@ -69,11 +69,11 @@ list_url = []
 urls = []
 options = chrome_option()
 start = 1
-while start < 2:
+while start < 3:
     URL = "https://search.shopping.naver.com/search/all?frm=NVSHOVS&origQuery=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&pagingIndex="+str(start)+"&pagingSize=40&productSet=overseas&query=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&sort=rel&timestamp=&viewType=list"
     driver = webdriver.Chrome(executable_path='chromedriver', chrome_options=options)
     driver.get(url=URL)
-    time.sleep(5)
+    time.sleep(2)
     html_scroll_down(driver) # 스크롤 하단으로 내려서 해당 내용이 나오게 한다.
     html_doc = driver.page_source
     soup = BeautifulSoup(html_doc, 'html.parser')
@@ -83,9 +83,8 @@ while start < 2:
         for j in list_d :
             list_e.append(j.get_text())
             urls = parseFile_urlHTTPExtract(j)
-
-    start = start + 1   
-
+    start = start + 1
+    # driver.close()
 print(urls)
 
 time.sleep(3)
