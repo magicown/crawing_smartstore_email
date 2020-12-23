@@ -27,47 +27,24 @@ def get_mail_addr(URL) :
     driver.get(url=URL)
     html_doc = driver.page_source
     
-    try:
-        # ID가 myDynamicElement인 element가 로딩될 때 까지 10초 대기
-        element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "etc"))
-        )
-    except TimeoutError:
-        print("Go to while loop from the begining")
-        time.sleep(1)
-    finally:
-        text = html_doc.split('<script>')
-        # print(text[1])
-        pattern = r"([\w\.-]+)@([\w\.-]+)(\.[\w\.]+)"
+    text = html_doc.split('<script>')
+    # print(text[1])
+    pattern = r"([\w\.-]+)@([\w\.-]+)(\.[\w\.][com|co.kr|kr|net|org]+)"
+    try :
         str = text[1]
         match = re.search(pattern, str)
         if match:
             # return match.group()        
-            print(match.group())
-    
-
-
-def get_html_source(URL) :
-    list_url = []
-    # 네이버 쇼핑에서 인테리어 검색 -> 해외구매 탭 선택 합니다.    
-    driver = webdriver.Chrome(executable_path='chromedriver', chrome_options=options)
-    driver.get(url=URL)
-    html_doc = driver.page_source
-    soup = BeautifulSoup(html_doc, 'html.parser')
-    list_div = soup.select('.basicList_item__2XT81')
-    
-    for list_d in list_div :    
-        try :
-            list_url.append(list_d.get_text())    
-        except :
-            break
-    
+            # return match.group()
+            list_url.append(match.group())
+    except :
+        pass    
 
 def parseFile_urlHTTPExtract(text) :
     urls = [a['href'] for a in text.find_all('a')]
     for url in urls :
         # list_url.append(url)
-        time.sleep(3)
+        time.sleep(3)        
         get_mail_addr(url)
     return list_url
 
@@ -109,7 +86,7 @@ while start < 2:
 
     start = start + 1   
 
-# print(urls)
+print(urls)
 
 time.sleep(3)
 driver.close()
