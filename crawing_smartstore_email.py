@@ -6,6 +6,12 @@ import re
 from bs4 import BeautifulSoup
 import pyautogui
 from selenium.webdriver.common.keys import Keys
+from urllib.parse import urlparse 
+import pandas as pd
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 
 def chrome_option():
     options = webdriver.ChromeOptions()
@@ -17,14 +23,28 @@ def chrome_option():
     return options
     
 
-def get_mail_addr() :
-    text = html_doc.split('<script>')
-    # print(text[1])
-    pattern = r"([\w\.-]+)@([\w\.-]+)(\.[\w\.]+)"
-    str = text[1]
-    match = re.search(pattern, str)
-    if match:
-        return match.group()        
+def get_mail_addr(URL) :
+    driver.get(url=URL)
+    html_doc = driver.page_source
+    
+    try:
+        # ID가 myDynamicElement인 element가 로딩될 때 까지 10초 대기
+        element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "etc"))
+        )
+    except TimeoutError:
+        print("Go to while loop from the begining")
+        time.sleep(1)
+    finally:
+        text = html_doc.split('<script>')
+        # print(text[1])
+        pattern = r"([\w\.-]+)@([\w\.-]+)(\.[\w\.]+)"
+        str = text[1]
+        match = re.search(pattern, str)
+        if match:
+            # return match.group()        
+            print(match.group())
+    
 
 
 def get_html_source(URL) :
@@ -35,66 +55,61 @@ def get_html_source(URL) :
     html_doc = driver.page_source
     soup = BeautifulSoup(html_doc, 'html.parser')
     list_div = soup.select('.basicList_item__2XT81')
-    print(len(list_div))
-    for list_d in list_div :
-        # print(list_d)
+    
+    for list_d in list_div :    
         try :
-            list_url.append(list_d.get_text())
-            # print('try 실행됨')
+            list_url.append(list_d.get_text())    
         except :
             break
-    # //*[@id="__next"]/div/div[2]/div[2]/div[3]/div[1]/ul/div/div[1]/li/div/div[2]/div[1]/a
-    # print(list_url)
+    
+
+def parseFile_urlHTTPExtract(text) :
+    urls = [a['href'] for a in text.find_all('a')]
+    for url in urls :
+        # list_url.append(url)
+        time.sleep(3)
+        get_mail_addr(url)
+    return list_url
 
 
-options = chrome_option()
-# URL = "https://smartstore.naver.com/blossom82/products/2643752178?NaPm=ct%3Dkizkrtyw%7Cci%3Df8e9652b315e7323334bce1297266b74551404cd%7Ctr%3Dslsl%7Csn%3D669077%7Chk%3D912eb9754eebee0f42aa2ccb46647a25a0db1d43"
-URL = "https://search.shopping.naver.com/search/all?frm=NVSHOVS&origQuery=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&pagingIndex=1&pagingSize=1000&productSet=overseas&query=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&sort=rel&timestamp=&viewType=list"
-driver = webdriver.Chrome(executable_path='chromedriver', chrome_options=options)
-driver.get(url=URL)
-time.sleep(5)
-start = 1
-SCROLL_PAUSE_TIME = 3
-# Get scroll height
-last_height = driver.execute_script("return document.body.scrollHeight")
-while start < 2:
+def html_scroll_down(driver) :
+    SCROLL_PAUSE_TIME = 3
+    last_height = driver.execute_script("return document.body.scrollHeight")    
     # Scroll down to bottom
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     # Wait to load page
     time.sleep(SCROLL_PAUSE_TIME)
     # Calculate new scroll height and compare with last scroll height
     new_height = driver.execute_script("return document.body.scrollHeight")
-    if new_height == last_height:
-        try:
-            start = start + 1
+    if new_height == last_height:        
+        return False       
             
-        except:
-            break
     last_height = new_height
-
 
 list_d = ""
 list_e = []
 list_url = []
-html_doc = driver.page_source
-soup = BeautifulSoup(html_doc, 'html.parser')
-list_div = soup.select('.basicList_item__2XT81')
-for i in list_div :
-    
-    list_d = i.select('.basicList_title__3P9Q7')
-    for j in list_d :
-        list_e.append(j.get_text())
-        urls = re.findAll('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', j)
-        list_url.append(urls)
+urls = []
+options = chrome_option()
+start = 1
+while start < 2:
+    URL = "https://search.shopping.naver.com/search/all?frm=NVSHOVS&origQuery=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&pagingIndex="+str(start)+"&pagingSize=40&productSet=overseas&query=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&sort=rel&timestamp=&viewType=list"
+    driver = webdriver.Chrome(executable_path='chromedriver', chrome_options=options)
+    driver.get(url=URL)
+    time.sleep(5)
+    html_scroll_down(driver) # 스크롤 하단으로 내려서 해당 내용이 나오게 한다.
+    html_doc = driver.page_source
+    soup = BeautifulSoup(html_doc, 'html.parser')
+    list_div = soup.select('.basicList_item__2XT81')
+    for i in list_div :    
+        list_d = i.select('.basicList_title__3P9Q7')
+        for j in list_d :
+            list_e.append(j.get_text())
+            urls = parseFile_urlHTTPExtract(j)
 
-print(list_url)
+    start = start + 1   
 
-# res = True
-# URL = "https://smartstore.naver.com/blossom82/products/2643752178?NaPm=ct%3Dkizkrtyw%7Cci%3Df8e9652b315e7323334bce1297266b74551404cd%7Ctr%3Dslsl%7Csn%3D669077%7Chk%3D912eb9754eebee0f42aa2ccb46647a25a0db1d43"
-# start = 1
-# while True:
-#     res = get_html_source("https://search.shopping.naver.com/search/all?frm=NVSHOVS&origQuery=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&pagingIndex="+ str(start)+ "&pagingSize=4010000&productSet=overseas&query=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4&sort=rel&timestamp=&viewType=list")
-#     if res == False :
-#         break
-#     else :
-#         start = start + 1
+# print(urls)
+
+time.sleep(3)
+driver.close()
